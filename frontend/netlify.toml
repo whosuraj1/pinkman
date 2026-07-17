@@ -1,0 +1,12 @@
+# Netlify build settings for the frontend.
+# In the Netlify UI set the base directory to "frontend" (or deploy this folder directly).
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback so React Router routes work on refresh
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

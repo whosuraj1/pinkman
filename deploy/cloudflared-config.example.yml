@@ -1,0 +1,17 @@
+# Example cloudflared config for the NAMED-TUNNEL (config-file) method.
+# Only needed if you use `cloudflared tunnel run` with a config file instead of
+# the dashboard token method. Place at: ~/.cloudflared/config.yml
+#
+# Replace:
+#   <TUNNEL_ID>        with the id printed by `cloudflared tunnel create pinkman`
+#   api.example.com    with the hostname you want for the backend
+
+tunnel: <TUNNEL_ID>
+credentials-file: /home/ubuntu/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  # Route your public hostname to the backend running on localhost.
+  - hostname: api.example.com
+    service: http://localhost:8000
+  # Everything else returns 404 (required catch-all).
+  - service: http_status:404
