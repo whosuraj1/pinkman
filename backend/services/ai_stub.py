@@ -11,10 +11,11 @@ Expected return shape for each image:
     {
         "title": str,
         "description": str,
-        "bullet_points": list[str],
-        "keywords": list[str],
+        "bullet_points": List[str],
+        "keywords": List[str],
     }
 """
+from typing import List, Dict, Optional, Union
 import time
 
 

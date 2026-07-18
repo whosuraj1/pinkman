@@ -2,6 +2,7 @@
 
 Kept intentionally simple for the prototype. Uses SQLModel (SQLAlchemy + Pydantic).
 """
+from typing import List, Dict, Optional, Union
 from datetime import datetime
 from enum import Enum
 from typing import Optional
@@ -37,6 +38,11 @@ class Batch(SQLModel, table=True):
     status: BatchStatus = BatchStatus.assigned
     total_images: int = 0
     processed_images: int = 0
+    # True once the processing job has generated an Amazon template for this batch.
+    has_template: bool = False
+    # The completed template file the user uploads back on the Finish page.
+    completed_file_path: Optional[str] = None
+    completed_filename: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
 

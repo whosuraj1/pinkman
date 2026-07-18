@@ -9,6 +9,7 @@
     4. Produce an XLSX with the resulting image links.
 =====================================================================
 """
+from typing import List, Dict, Optional, Union
 import os
 import time
 from datetime import datetime
@@ -27,7 +28,7 @@ def cleanup_old_images(folder_id: str) -> int:
     return 0
 
 
-def upload_images_and_make_links(image_names: list[str], output_dir: str) -> dict:
+def upload_images_and_make_links(image_names: List[str], output_dir: str) -> dict:
     """Simulate uploading images and building the links XLSX.
 
     TODO: replace with real Drive uploads. Returns {"file_path", "links"}.

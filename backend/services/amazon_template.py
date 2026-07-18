@@ -4,6 +4,7 @@ Builds an .xlsx that mimics an Amazon flat-file / category template and fills it
 with the AI-generated fields plus some default values. Swap the columns and
 defaults for your real Amazon category template later.
 """
+from typing import List, Dict, Optional, Union
 import os
 from datetime import datetime
 
@@ -38,7 +39,7 @@ COLUMNS = [
 ]
 
 
-def generate_amazon_template(rows: list[dict], output_dir: str, batch_name: str) -> str:
+def generate_amazon_template(rows: List[dict], output_dir: str, batch_name: str) -> str:
     """Create an Amazon template xlsx from processed image rows.
 
     `rows` is a list of the dicts returned by ai_stub.analyze_image, each also

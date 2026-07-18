@@ -1,0 +1,38 @@
+# Pinkman quick-tunnel — STOPGAP systemd service.
+# Runs the free trycloudflare "quick tunnel" as a background service that starts on
+# boot and restarts if it drops. NOTE: the quick-tunnel URL still CHANGES on each
+# (re)start — this service only stops it from dying when you close your SSH session.
+# For a permanent fixed URL, replace this with a named tunnel on a real domain.
+#
+# It writes its log to /var/log/pinkman-tunnel.log so we can read the current URL.
+#
+# Install:
+#   sudo cp deploy/pinkman-tunnel.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now pinkman-tunnel
+#
+# Read the current public URL:
+#   grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' /var/log/pinkman-tunnel.log | tail -1
+#
+# Remove (rollback):
+#   sudo systemctl disable --now pinkman-tunnel
+#   sudo rm /etc/systemd/system/pinkman-tunnel.service
+#   sudo systemctl daemon-reload
+
+[Unit]
+Description=Pinkman Cloudflare quick tunnel (stopgap, localhost:8000)
+After=network-online.target pinkman-backend.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+# --protocol http2 avoids the QUIC/UDP issues some networks have.
+# Log goes to a fixed path so our re-sync helper can always find the current URL.
+ExecStart=/usr/bin/cloudflared tunnel --protocol http2 --no-autoupdate --url http://localhost:8000 --logfile /var/log/pinkman-tunnel.log
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

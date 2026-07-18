@@ -22,6 +22,7 @@ export default function Sidebar() {
       {isAdmin && <NavLink to="/users" className={link}>Users & Batches</NavLink>}
       <NavLink to="/process" className={link}>Process Images</NavLink>
       <NavLink to="/tools" className={link}>Tools · Drive Upload</NavLink>
+      <NavLink to="/finish" className={link}>Finish</NavLink>
       <NavLink to="/reports" className={link}>Reports</NavLink>
 
       <div className="spacer" />

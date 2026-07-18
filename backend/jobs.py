@@ -7,6 +7,7 @@ template and records a Report row.
 Note: state lives in memory, which is fine for a single-process prototype. For a
 multi-worker production deploy, move this to Redis or the database.
 """
+from typing import List, Dict, Optional, Union
 import threading
 import uuid
 from dataclasses import dataclass, field
@@ -28,21 +29,21 @@ class Job:
     user_id: int
     batch_id: Optional[int]
     batch_name: str
-    image_names: list[str]
+    image_names: List[str]
     total: int
     processed: int = 0
     status: str = "running"        # running | completed | error
     current_image: str = ""
     report_id: Optional[int] = None
     error: str = ""
-    results: list[dict] = field(default_factory=list)
+    results: List[dict] = field(default_factory=list)
 
 
-_jobs: dict[str, Job] = {}
+_jobs: Dict[str, Job] = {}
 _lock = threading.Lock()
 
 
-def create_job(user_id: int, batch_id: Optional[int], batch_name: str, image_names: list[str]) -> Job:
+def create_job(user_id: int, batch_id: Optional[int], batch_name: str, image_names: List[str]) -> Job:
     job = Job(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -103,6 +104,12 @@ def run_job(job_id: str) -> None:
                 file_path=path,
             )
             s.add(report)
+            # mark the batch as having a generated template (enables the Finish step)
+            if job.batch_id is not None:
+                b = s.get(Batch, job.batch_id)
+                if b:
+                    b.has_template = True
+                    s.add(b)
             s.commit()
             s.refresh(report)
             job.report_id = report.id

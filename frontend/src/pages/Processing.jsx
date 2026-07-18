@@ -67,19 +67,6 @@ export default function Processing() {
 
   useEffect(() => () => clearInterval(pollRef.current), []);
 
-  async function markDone() {
-    if (!batchId) {
-      setMsg("This was an ad-hoc run (no batch selected), so there's nothing to mark done.");
-      return;
-    }
-    try {
-      await api.post(`/batches/${batchId}/done`);
-      setMsg("Batch marked as completed. The admin dashboard now shows it as done.");
-    } catch (err) {
-      setMsg(err.response?.data?.detail || "Could not mark done");
-    }
-  }
-
   const isComplete = status?.status === "completed";
   const pct = status && status.total ? Math.round((status.processed / status.total) * 100) : 0;
 
@@ -134,7 +121,7 @@ export default function Processing() {
             <div style={{ marginTop: 16 }}>
               <div className="badge completed" style={{ marginRight: 12 }}>Amazon template generated</div>
               {status.report_id && (
-                <a href="/reports"><button className="ghost">View in Reports</button></a>
+                <a href="/reports"><button className="ghost">Download template (Reports)</button></a>
               )}
             </div>
           )}
@@ -142,13 +129,13 @@ export default function Processing() {
       )}
 
       <div className="card">
-        <h3>Finish batch</h3>
-        <p className="muted">
-          The <b>Done</b> button unlocks only after all images are processed and the template is generated.
-        </p>
-        <button className="success" disabled={!isComplete} onClick={markDone}>
-          Done — mark batch completed & uploaded
-        </button>
+        <h3>Next steps</h3>
+        <ol className="muted" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>Download the generated Amazon template (from the <b>Reports</b> page).</li>
+          <li>Edit your images and upload them via <b>Tools · Drive Upload</b> to get the image-links file.</li>
+          <li>Paste those image URLs into the downloaded template and save it.</li>
+          <li>Go to the <b>Finish</b> page, upload the completed template, and click <b>Done</b>.</li>
+        </ol>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 Prototype only — wraps drive_stub. Real Drive API code plugs into services/drive_stub.py.
 """
+from typing import List, Dict, Optional, Union
 import os
 
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ OUTPUT_DIR = "generated_reports"
 
 class UploadRequest(BaseModel):
     folder_id: str = ""
-    image_names: list[str]
+    image_names: List[str]
     cleanup_if_needed: bool = True
 
 

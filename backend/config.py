@@ -3,6 +3,7 @@
 All values can be overridden with environment variables (or a .env file).
 See .env.example for the list of variables.
 """
+from typing import List, Dict, Optional, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     default_admin_password: str = "admin123"
 
     @property
-    def cors_origin_list(self) -> list[str]:
+    def cors_origin_list(self) -> List[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
 

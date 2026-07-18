@@ -8,6 +8,7 @@ For the prototype we only need the filenames to drive progress + template
 generation. When you wire in real Gemini + real file uploads, extend `start` to
 accept the actual files (multipart) and pass their paths into the job.
 """
+from typing import List, Dict, Optional, Union
 from pydantic import BaseModel
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlmodel import Session
@@ -21,9 +22,9 @@ router = APIRouter(prefix="/processing", tags=["processing"])
 
 
 class StartRequest(BaseModel):
-    batch_id: int | None = None
+    batch_id: Optional[int] = None
     batch_name: str = "batch"
-    image_names: list[str]
+    image_names: List[str]
 
 
 @router.post("/start")

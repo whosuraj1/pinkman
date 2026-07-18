@@ -7,6 +7,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import Users from "./pages/Users";
 import Processing from "./pages/Processing";
+import Finish from "./pages/Finish";
 import Reports from "./pages/Reports";
 import Tools from "./pages/Tools";
 
@@ -43,6 +44,7 @@ export default function App() {
           >
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/process" element={<Processing />} />
+            <Route path="/finish" element={<Finish />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/tools" element={<Tools />} />
             <Route
