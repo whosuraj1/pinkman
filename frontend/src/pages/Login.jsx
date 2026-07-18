@@ -5,7 +5,7 @@ import { useAuth } from "../auth";
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState("user"); // just a UI hint; backend decides role
+  const [mode, setMode] = useState("user");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -50,10 +50,6 @@ export default function Login() {
         <button className="primary" style={{ width: "100%", marginTop: 18 }} disabled={loading}>
           {loading ? "Signing in..." : "Sign In"}
         </button>
-
-        <div className="muted" style={{ marginTop: 16, fontSize: 11 }}>
-          Demo: admin / admin123 &nbsp;·&nbsp; employee1 / employee123
-        </div>
       </form>
     </div>
   );
