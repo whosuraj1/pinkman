@@ -44,7 +44,7 @@ export default function UserDashboard() {
                 <td><span className={`badge ${b.status}`}>{b.status.replace("_", " ")}</span></td>
                 <td>
                   {b.status !== "completed" && (
-                    <Link to={`/process?batch=${b.id}`}><button className="primary">Process</button></Link>
+                    <Link to="/my-batches"><button className="primary">Open</button></Link>
                   )}
                 </td>
               </tr>

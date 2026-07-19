@@ -20,7 +20,8 @@ export default function Sidebar() {
 
       <NavLink to="/dashboard" className={link}>Dashboard</NavLink>
       {isAdmin && <NavLink to="/users" className={link}>Users & Batches</NavLink>}
-      <NavLink to="/process" className={link}>Process Images</NavLink>
+      <NavLink to="/process" className={link}>MrWhite AI</NavLink>
+      <NavLink to="/my-batches" className={link}>My Batches</NavLink>
       <NavLink to="/tools" className={link}>Tools · Drive Upload</NavLink>
       <NavLink to="/finish" className={link}>Finish</NavLink>
       <NavLink to="/reports" className={link}>Reports</NavLink>
