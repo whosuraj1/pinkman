@@ -23,6 +23,7 @@ export default function Sidebar() {
       <NavLink to="/process" className={link}>MrWhite AI</NavLink>
       <NavLink to="/my-batches" className={link}>My Batches</NavLink>
       <NavLink to="/tools" className={link}>Tools · Drive Upload</NavLink>
+      {isAdmin && <NavLink to="/api-keys" className={link}>API Keys</NavLink>}
       <NavLink to="/finish" className={link}>Finish</NavLink>
       <NavLink to="/reports" className={link}>Reports</NavLink>
 

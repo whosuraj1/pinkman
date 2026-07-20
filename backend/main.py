@@ -16,7 +16,7 @@ from auth import hash_password
 from config import settings
 from database import engine, init_db
 from models import Role, User
-from routers import auth, batches, processing, reports, tools, users
+from routers import auth, batches, processing, reports, tools, users, api_keys
 
 
 def seed_admin() -> None:
@@ -70,6 +70,7 @@ app.include_router(batches.router)
 app.include_router(processing.router)
 app.include_router(reports.router)
 app.include_router(tools.router)
+app.include_router(api_keys.router)
 
 
 @app.get("/")

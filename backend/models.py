@@ -55,3 +55,20 @@ class Report(SQLModel, table=True):
     filename: str = ""
     file_path: str = ""                  # server-side path to the generated file
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ApiKey(SQLModel, table=True):
+    """A Gemini API key managed from the admin dashboard (round-robin rotation)."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    label: str = ""                      # friendly name, e.g. "Key 1"
+    key_value: str = ""                  # the actual API key (stored server-side)
+    enabled: bool = True
+    daily_quota: int = 0                 # 0 = unlimited; else max requests/day
+    quota_used: int = 0                  # requests routed to this key
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Setting(SQLModel, table=True):
+    """Simple key/value app settings (e.g. the Gemini model name, rotation pointer)."""
+    key: str = Field(primary_key=True)
+    value: str = ""

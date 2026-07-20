@@ -11,6 +11,7 @@ import MyBatches from "./pages/MyBatches";
 import Finish from "./pages/Finish";
 import Reports from "./pages/Reports";
 import Tools from "./pages/Tools";
+import ApiKeys from "./pages/ApiKeys";
 
 function Layout() {
   return (
@@ -49,6 +50,14 @@ export default function App() {
             <Route path="/finish" element={<Finish />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/tools" element={<Tools />} />
+            <Route
+              path="/api-keys"
+              element={
+                <ProtectedRoute adminOnly>
+                  <ApiKeys />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/users"
               element={

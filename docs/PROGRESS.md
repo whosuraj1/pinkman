@@ -195,6 +195,31 @@ Legend: ✅ done · 🔄 in progress · ⏳ next · ❗blocked
 - Frontend builds clean; backend delete endpoint tested. NOT yet deployed.
 - **Status:** ✅ built locally; pending server update + deploy.
 
+## Feature: API Key Management (Gemini keys, round-robin) ✅ (2026-07-19)
+- **What:** Admin-only "API Keys" page (sidebar, under Tools) to manage Gemini keys
+  and the model name from the dashboard instead of editing code.
+- **Backend:**
+  - Models: `ApiKey` (label, key_value, enabled, daily_quota, quota_used) and
+    `Setting` (key/value) for model name + rotation pointer. New tables auto-created
+    by create_all on startup (no manual migration).
+  - `services/gemini_keys.py`: `get_next_key(session)` = round-robin over ENABLED,
+    non-exhausted keys (increments that key's quota_used, advances pointer);
+    `get_model_name/set_model_name`; masking + status/summary helpers. This is the
+    hook the future Gemini pipeline will call per request.
+  - `routers/api_keys.py` (admin only): GET list (+model), PUT /settings/model,
+    POST add, PUT /{id} edit (label/key/quota/enabled), POST /{id}/reset,
+    DELETE /{id}. Keys never returned in full — masked (••••last4).
+  - Registered router in main.py.
+- **Frontend:** `ApiKeys.jsx` — model-name field w/ Save at top; add-key form; table
+  with Quota Used / Quota Remaining (∞ if unlimited) / Status badge + actions
+  (Enable/Disable, Edit inline, Reset, Delete). Admin-only route + sidebar link.
+- **Quota model note:** Gemini has no simple per-key remaining-quota API, so quota is
+  a request counter vs. an optional per-key daily limit the admin sets (not live from
+  Google). True live quota would need Google Cloud monitoring later.
+- **Tested:** round-robin 1→2→3→1→2→3 confirmed; disabling a key skips it in rotation;
+  model set/get; masking; quota counters. Frontend builds clean.
+- **Status:** ✅ built + tested locally; pending deploy.
+
 ## Phase 6+ — Features (one at a time) ⏳
 - Harden login / change default demo passwords, Gemini pipeline, Google Drive tool,
   image resize + bounded concurrency, etc. Owner will supply feature requests and
