@@ -8,10 +8,10 @@ export default function ApiKeys() {
   const [msg, setMsg] = useState("");
 
   // add form
-  const [nk, setNk] = useState({ label: "", key_value: "", daily_quota: 0 });
+  const [nk, setNk] = useState({ label: "", key_value: "" });
   // inline edit
   const [editId, setEditId] = useState(null);
-  const [edit, setEdit] = useState({ label: "", key_value: "", daily_quota: 0 });
+  const [edit, setEdit] = useState({ label: "", key_value: "" });
 
   async function load() {
     const { data } = await api.get("/api-keys");
@@ -34,8 +34,8 @@ export default function ApiKeys() {
     e.preventDefault();
     setMsg("");
     try {
-      await api.post("/api-keys", { ...nk, daily_quota: Number(nk.daily_quota) || 0 });
-      setNk({ label: "", key_value: "", daily_quota: 0 });
+      await api.post("/api-keys", { ...nk });
+      setNk({ label: "", key_value: "" });
       load();
     } catch (er) { setMsg(er.response?.data?.detail || "Failed to add key"); }
   }
@@ -55,10 +55,10 @@ export default function ApiKeys() {
   }
   function startEdit(k) {
     setEditId(k.id);
-    setEdit({ label: k.label, key_value: "", daily_quota: k.daily_quota });
+    setEdit({ label: k.label, key_value: "" });
   }
   async function saveEdit(id) {
-    const body = { label: edit.label, daily_quota: Number(edit.daily_quota) || 0 };
+    const body = { label: edit.label };
     if (edit.key_value.trim()) body.key_value = edit.key_value.trim();
     await api.put(`/api-keys/${id}`, body);
     setEditId(null);
@@ -96,10 +96,6 @@ export default function ApiKeys() {
               <label>API key</label>
               <input value={nk.key_value} onChange={(e) => setNk({ ...nk, key_value: e.target.value })} placeholder="AIza..." required />
             </div>
-            <div>
-              <label>Daily quota (0 = unlimited)</label>
-              <input type="number" min="0" value={nk.daily_quota} onChange={(e) => setNk({ ...nk, daily_quota: e.target.value })} />
-            </div>
             <button className="primary" style={{ flex: "0 0 auto" }}>Add</button>
           </div>
         </form>
@@ -126,7 +122,7 @@ export default function ApiKeys() {
                   <td><input value={edit.label} onChange={(e) => setEdit({ ...edit, label: e.target.value })} /></td>
                   <td><input value={edit.key_value} onChange={(e) => setEdit({ ...edit, key_value: e.target.value })} placeholder="leave blank to keep" /></td>
                   <td>{k.quota_used}</td>
-                  <td><input type="number" min="0" value={edit.daily_quota} onChange={(e) => setEdit({ ...edit, daily_quota: e.target.value })} style={{ width: 90 }} /></td>
+                  <td>∞</td>
                   <td>—</td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     <button className="success" onClick={() => saveEdit(k.id)}>Save</button>{" "}
