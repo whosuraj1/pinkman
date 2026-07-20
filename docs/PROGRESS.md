@@ -128,6 +128,73 @@ Legend: ✅ done · 🔄 in progress · ⏳ next · ❗blocked
 - **Status:** ✅ built & tested locally. NOT yet deployed (needs GitHub push + server
   pull + Netlify rebuild — pending the Phase 5 auto-update setup).
 
+## Phase 5 — Auto-update workflow ✅ (2026-07-18)
+- **What:** Made GitHub the single source of truth and set up a one-command deploy.
+- **Why:** End the "three diverging copies" problem (GitHub had old code, server had
+  the 3.8 patch, workspace had the newest). Enable push→auto-deploy going forward.
+- **How:**
+  - Transferred newest code to the server via WinSCP (SFTP, existing .ppk key) into
+    `~/pinkman_new`, then `rsync`-overlaid onto `~/pinkman` excluding
+    `.git/.venv/.env/pinkman.db/generated_reports/completed_uploads` (secrets + data
+    preserved). Restarted backend; auto-migration added the new batch columns.
+  - Created a fine-grained GitHub PAT (repo `whosuraj1/pinkman`, Contents R/W),
+    embedded it in the git remote URL for passwordless push.
+  - Committed + pushed: `cf410ec..77ab7c7`. GitHub now matches server. This also
+    triggers Netlify to auto-build the frontend (Finish page).
+  - Added `deploy.sh` (commit+push+deps+restart) and `docs/RUNBOOK_deploy.md`.
+- **SECURITY TODO:** the PAT was pasted in chat during setup → REVOKE it and generate
+  a fresh private one (see open items).
+- **Status:** ✅ Auto-deploy VERIFIED: pushed commit `77ab7c7` was picked up by
+  Netlify automatically and Published (2026-07-18). Push→GitHub→Netlify loop works.
+  Token rotated to a fresh private one (exposed ones to be deleted); `PUSH AUTH OK`
+  confirmed via commit `d5079a3`. Phase 5 fully done.
+
+## Feature: MrWhite AI rename + Country/Category + My Batches (frontend only) ✅ (2026-07-18)
+- **Scope:** FRONTEND ONLY per owner. No backend logic touched. Backend still uses the
+  existing /processing/start and /reports endpoints; country/category are UI-only for
+  now (owner will wire per-category templates later).
+- **Changes:**
+  - Renamed "Process Images" → **MrWhite AI** (sidebar + page title, route stays /process).
+  - MrWhite AI: added **Country** radios (UAE, India), then **Category** select
+    (placeholder list in code — CATEGORIES const, to be replaced later). Kept the
+    processing **progress bar**. Start is gated on country + category + folder.
+  - **Removed** the "Batch (optional…)" selector from MrWhite AI entirely. Processing
+    now runs batch-less (batch_id: null; batch_name = `<country>-<category>`).
+  - Generated file now **downloads directly from MrWhite AI** (blob download via
+    /reports/{report_id}/download) instead of pointing to Reports. Removed old "Next
+    steps → Reports" card.
+  - New **My Batches** page (sidebar, route /my-batches): lists the logged-in user's
+    assigned batches (GET /batches) with a **Download ZIP** button (opens drive_link).
+  - UserDashboard per-batch button now links to My Batches ("Open") instead of the
+    old batch-linked process URL.
+  - Admin batch assignment unchanged (Users & Batches already supports assigning any
+    number of batches to any user by name).
+- **Heads-up (not yet addressed):** the **Finish** page filters batches by
+  `has_template`, which was previously set during batch-LINKED processing. Now that
+  MrWhite AI runs batch-less, `has_template` won't be set, so Finish will show
+  "no batches ready". Needs a decision on how Finish should work under the new
+  batch-less flow (flagged to owner).
+- Frontend builds clean. NOT yet deployed.
+- **Status:** ✅ built locally; pending server update + deploy.
+
+## Feature: delete users + MrWhite AI Amazon Category / Search Keyword ✅ (2026-07-19)
+- **Delete users (admin):** Added `DELETE /users/{id}` (backend — a NECESSARY small
+  exception to the frontend-only rule, since delete can't work without an endpoint;
+  it's generic CRUD, NOT the reserved AI logic). Safety: admin-only, can't delete
+  self, can't delete the last admin; a deleted user's batches are unassigned (kept).
+  Frontend: Delete button + confirm dialog in Users & Batches → All users table.
+  Tested: create/delete works; self-delete blocked; non-admin blocked; last-admin
+  guard in place.
+- **MrWhite AI (frontend only):**
+  - Renamed "Category" → **Amazon Category**.
+  - Added a **Search Keyword** text field beside Amazon Category.
+  - Added two radios ABOVE those fields: **Not Specified Search Keyword** (default) /
+    **Specific Search Keyword**. Keyword input is enabled only in "specific" mode;
+    Start requires a non-empty keyword when "specific" is chosen. (Guidance text
+    explains the AI will focus on that product/object — wiring is for later.)
+- Frontend builds clean; backend delete endpoint tested. NOT yet deployed.
+- **Status:** ✅ built locally; pending server update + deploy.
+
 ## Phase 6+ — Features (one at a time) ⏳
 - Harden login / change default demo passwords, Gemini pipeline, Google Drive tool,
   image resize + bounded concurrency, etc. Owner will supply feature requests and
@@ -172,6 +239,13 @@ Legend: ✅ done · 🔄 in progress · ⏳ next · ❗blocked
       Needs a domain on Cloudflare. Ends the URL-churn problem for good. Until then,
       login breaks whenever the SSH session/tunnel restarts.
 - [ ] Confirm Oracle account type + set ~$1 budget alert (billing safety). (DEC #3)
-- [ ] Change default demo credentials (admin/admin123, employee1/employee123) before real use.
+- [x] Change default demo credentials — DONE 2026-07-18. admin + employee1 passwords
+      reset via new `backend/reset_password.py` utility (prompts, hidden input). Old
+      admin123/employee123 no longer valid. reset_password.py is the recovery tool.
+- [x] Remove the "Demo: admin/admin123..." hint from the login page — DONE (commit
+      45d3b09, pushed to origin/main, Netlify auto-built).
+- [x] Commit `reset_password.py` to the repo — DONE (commit 45d3b09).
+- Note: deploy pipeline verified with real changes flowing through
+  (edit → deploy.sh → GitHub → Netlify). Commits: 77ab7c7, d5079a3, 45d3b09.
 - [ ] Re-add `.gitignore` / `.env.example` to the repo (skipped by web upload).
 - [ ] Push the Python-3.8 compatibility fix + docs/ to GitHub during Phase 5.

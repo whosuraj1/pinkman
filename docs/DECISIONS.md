@@ -34,6 +34,8 @@ complexity. So instead of upgrading Python, we keep the code 3.8-friendly: use
 `typing.List/Dict/Optional/Union` instead of `list[...]`, `dict[...]`, `X | None`.
 (This was applied as a patch on 2026-07-17 after the first run failed.)
 
-### #5 — Record-keeping via docs/ (SOP, PROGRESS, DECISIONS)
-**Why:** Owner wants the project organized from the start with a clear paper trail
-of what/why/how, so nothing gets missed as features are added over time.
+### #6 — Backend work permitted again (2026-07-19)
+**Why:** The earlier "frontend only, no backend" rule (put in place while the owner
+held the AI/Gemini logic to explain later) has been lifted. Owner: "I want you to
+touch backend." Backend code changes are allowed going forward. (The AI/processing
+logic itself is still owner-supplied when they're ready.)

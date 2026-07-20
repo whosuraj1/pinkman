@@ -7,3 +7,4 @@ __pycache__/
 pinkman.db
 server.log
 generated_reports/
+completed_uploads/

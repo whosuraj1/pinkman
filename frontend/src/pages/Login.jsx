@@ -5,7 +5,7 @@ import { useAuth } from "../auth";
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState("user");
+  const [mode, setMode] = useState("user"); // just a UI hint; backend decides role
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

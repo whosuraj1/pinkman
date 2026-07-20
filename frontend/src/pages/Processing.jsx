@@ -22,6 +22,8 @@ const CATEGORIES = [
 export default function Processing() {
   const [country, setCountry] = useState("");
   const [category, setCategory] = useState("");
+  const [keywordMode, setKeywordMode] = useState("not_specified"); // not_specified | specific
+  const [searchKeyword, setSearchKeyword] = useState("");
   const [files, setFiles] = useState([]);      // File objects from the folder picker
   const [jobId, setJobId] = useState(null);
   const [status, setStatus] = useState(null);  // {status,total,processed,remaining,current_image,report_id}
@@ -38,7 +40,8 @@ export default function Processing() {
     setMsg(picked.length ? `${picked.length} image(s) found in folder.` : "No images found in that folder.");
   }
 
-  const ready = country && category && files.length;
+  const keywordOk = keywordMode === "not_specified" || (keywordMode === "specific" && searchKeyword.trim());
+  const ready = country && category && files.length && keywordOk;
 
   async function startProcess() {
     if (!ready) return;
@@ -119,18 +122,62 @@ export default function Processing() {
         </div>
       </div>
 
-      {/* Step 2: Category (after country) */}
+      {/* Step 2: Search keyword mode, then Amazon Category + Search Keyword */}
       <div className="card">
-        <label>Category</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          disabled={!country}
-          style={{ maxWidth: 400 }}
-        >
-          <option value="">{country ? "Select a category" : "Select a country first"}</option>
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <label>Search keyword</label>
+        <div style={{ display: "flex", gap: 20, marginTop: 6, marginBottom: 16 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, cursor: "pointer" }}>
+            <input
+              type="radio"
+              name="keywordMode"
+              value="not_specified"
+              checked={keywordMode === "not_specified"}
+              onChange={() => { setKeywordMode("not_specified"); setSearchKeyword(""); }}
+              style={{ width: "auto" }}
+            />
+            Not Specified Search Keyword
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, cursor: "pointer" }}>
+            <input
+              type="radio"
+              name="keywordMode"
+              value="specific"
+              checked={keywordMode === "specific"}
+              onChange={() => setKeywordMode("specific")}
+              style={{ width: "auto" }}
+            />
+            Specific Search Keyword
+          </label>
+        </div>
+
+        <div className="row" style={{ alignItems: "flex-start" }}>
+          <div>
+            <label>Amazon Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              disabled={!country}
+            >
+              <option value="">{country ? "Select a category" : "Select a country first"}</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Search Keyword</label>
+            <input
+              type="text"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              disabled={keywordMode !== "specific"}
+              placeholder={keywordMode === "specific" ? "e.g. stainless steel water bottle" : "Not specified"}
+            />
+          </div>
+        </div>
+        {keywordMode === "specific" && (
+          <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
+            The AI will focus on this product/object while analyzing the images.
+          </div>
+        )}
       </div>
 
       {/* Step 3: Folder + Start */}
@@ -156,9 +203,11 @@ export default function Processing() {
             Start Process
           </button>
         </div>
-        {!ready && (country || category || files.length) && (
+        {!ready && (country || category || files.length || searchKeyword) && (
           <div className="muted" style={{ marginTop: 10 }}>
-            Select a country, a category, and an image folder to begin.
+            {keywordMode === "specific" && !searchKeyword.trim()
+              ? "Enter a search keyword, or switch to \"Not Specified\"."
+              : "Select a country, an Amazon category, and an image folder to begin."}
           </div>
         )}
         {msg && <div className="muted" style={{ marginTop: 10 }}>{msg}</div>}

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
-from auth import hash_password, require_admin
+from auth import get_current_user, hash_password, require_admin
 from database import get_session
 from models import Batch, BatchStatus, Role, User
 
@@ -45,6 +45,41 @@ def create_user(
     session.commit()
     session.refresh(user)
     return {"id": user.id, "username": user.username, "full_name": user.full_name, "role": user.role}
+
+
+@router.delete("/{user_id}")
+def delete_user(
+    user_id: int,
+    current: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Delete a user (admin only). Safety rules:
+    - only admins may delete
+    - you cannot delete your own account
+    - you cannot delete the last remaining admin
+    Any batches assigned to the deleted user are unassigned (kept, not deleted).
+    """
+    if current.role != Role.admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    target = session.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.id == current.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+    if target.role == Role.admin:
+        admin_count = len(session.exec(select(User).where(User.role == Role.admin)).all())
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot delete the last admin")
+
+    # Unassign this user's batches so no records point at a deleted user.
+    batches = session.exec(select(Batch).where(Batch.assigned_user_id == user_id)).all()
+    for b in batches:
+        b.assigned_user_id = None
+        session.add(b)
+
+    session.delete(target)
+    session.commit()
+    return {"deleted": user_id}
 
 
 @router.get("/progress")

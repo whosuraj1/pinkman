@@ -50,6 +50,20 @@ export default function Users() {
 
   const employees = users.filter((u) => u.role === "user");
 
+  const [delErr, setDelErr] = useState("");
+  async function deleteUser(u) {
+    setDelErr("");
+    if (!window.confirm(`Delete user "${u.username}"? This cannot be undone. Their assigned batches will be unassigned (not deleted).`)) {
+      return;
+    }
+    try {
+      await api.delete(`/users/${u.id}`);
+      load();
+    } catch (err) {
+      setDelErr(err.response?.data?.detail || "Failed to delete user");
+    }
+  }
+
   return (
     <div>
       <h1 className="page-title">Users & Batches</h1>
@@ -103,13 +117,19 @@ export default function Users() {
       <div className="card">
         <h3>All users</h3>
         <table>
-          <thead><tr><th>ID</th><th>Username</th><th>Name</th><th>Role</th></tr></thead>
+          <thead><tr><th>ID</th><th>Username</th><th>Name</th><th>Role</th><th></th></tr></thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id}><td>{u.id}</td><td>{u.username}</td><td>{u.full_name || "—"}</td><td>{u.role}</td></tr>
+              <tr key={u.id}>
+                <td>{u.id}</td><td>{u.username}</td><td>{u.full_name || "—"}</td><td>{u.role}</td>
+                <td>
+                  <button className="danger-btn" onClick={() => deleteUser(u)}>Delete</button>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
+        {delErr && <div className="error">{delErr}</div>}
       </div>
 
       <div className="card">

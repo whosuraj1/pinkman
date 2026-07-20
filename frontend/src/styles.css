@@ -47,6 +47,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.success { background: var(--accent-2); border-color: var(--accent-2); color: #05230f; }
 button.ghost { background: transparent; }
+button.danger-btn { background: transparent; border-color: var(--danger); color: var(--danger); }
+button.danger-btn:hover { background: var(--danger); color: #fff; }
 
 input, select {
   font-family: "Fira Code", monospace;
