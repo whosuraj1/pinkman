@@ -3,12 +3,6 @@ import api from "../api";
 
 const IMAGE_RE = /\.(jpe?g|png|webp|gif|bmp|tiff?)$/i;
 
-// Country options (radio). More can be added later.
-const COUNTRIES = [
-  { value: "UAE", label: "UAE" },
-  { value: "India", label: "India" },
-];
-
 // Placeholder categories — replace/extend later. Each category will map to its own
 // backend template. (Frontend only for now; no backend wiring yet.)
 const CATEGORIES = [
@@ -20,7 +14,8 @@ const CATEGORIES = [
 ];
 
 export default function Processing() {
-  const [country, setCountry] = useState("");
+  const [stores, setStores] = useState([]);       // stores assigned to this user
+  const [storeId, setStoreId] = useState("");
   const [category, setCategory] = useState("");
   const [keywordMode, setKeywordMode] = useState("not_specified"); // not_specified | specific
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -32,6 +27,13 @@ export default function Processing() {
   const pollRef = useRef(null);
   const folderInputRef = useRef(null);
 
+  useEffect(() => {
+    api.get("/stores/mine").then((r) => setStores(r.data)).catch(() => {});
+  }, []);
+
+  const selectedStore = stores.find((s) => String(s.id) === String(storeId));
+  const country = selectedStore ? selectedStore.country : "";
+
   function onFolderSelected(e) {
     const picked = Array.from(e.target.files).filter((f) => IMAGE_RE.test(f.name));
     setFiles(picked);
@@ -41,7 +43,7 @@ export default function Processing() {
   }
 
   const keywordOk = keywordMode === "not_specified" || (keywordMode === "specific" && searchKeyword.trim());
-  const ready = country && category && files.length && keywordOk;
+  const ready = storeId && category && files.length && keywordOk;
 
   async function startProcess() {
     if (!ready) return;
@@ -50,8 +52,10 @@ export default function Processing() {
     try {
       const { data } = await api.post("/processing/start", {
         batch_id: null,
-        batch_name: `${country}-${category}`.replace(/\s+/g, "_"),
+        batch_name: `${selectedStore.name}-${category}`.replace(/\s+/g, "_"),
         image_names: files.map((f) => f.name),
+        store_id: selectedStore.id,
+        country: selectedStore.country,
       });
       setJobId(data.job_id);
       poll(data.job_id);
@@ -102,24 +106,32 @@ export default function Processing() {
     <div>
       <h1 className="page-title">MrWhite AI</h1>
 
-      {/* Step 1: Country */}
+      {/* Step 1: Store (from the user's assigned stores; picks the template) */}
       <div className="card">
-        <label>Country</label>
-        <div style={{ display: "flex", gap: 20, marginTop: 6 }}>
-          {COUNTRIES.map((c) => (
-            <label key={c.value} style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, cursor: "pointer" }}>
-              <input
-                type="radio"
-                name="country"
-                value={c.value}
-                checked={country === c.value}
-                onChange={(e) => { setCountry(e.target.value); setCategory(""); }}
-                style={{ width: "auto" }}
-              />
-              {c.label}
-            </label>
-          ))}
-        </div>
+        <label>Store</label>
+        {stores.length === 0 ? (
+          <div className="muted" style={{ marginTop: 6 }}>
+            No stores assigned to you yet. Ask your admin to assign a store.
+          </div>
+        ) : (
+          <>
+            <select
+              value={storeId}
+              onChange={(e) => { setStoreId(e.target.value); setCategory(""); }}
+              style={{ maxWidth: 400 }}
+            >
+              <option value="">Select a store</option>
+              {stores.map((s) => (
+                <option key={s.id} value={s.id}>{s.name} — {s.country}</option>
+              ))}
+            </select>
+            {selectedStore && (
+              <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
+                Template auto-selected: <b>{selectedStore.country}</b>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Step 2: Search keyword mode, then Amazon Category + Search Keyword */}
@@ -156,9 +168,9 @@ export default function Processing() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              disabled={!country}
+              disabled={!storeId}
             >
-              <option value="">{country ? "Select a category" : "Select a country first"}</option>
+              <option value="">{storeId ? "Select a category" : "Select a store first"}</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
@@ -203,11 +215,11 @@ export default function Processing() {
             Start Process
           </button>
         </div>
-        {!ready && (country || category || files.length || searchKeyword) && (
+        {!ready && (storeId || category || files.length || searchKeyword) && (
           <div className="muted" style={{ marginTop: 10 }}>
             {keywordMode === "specific" && !searchKeyword.trim()
               ? "Enter a search keyword, or switch to \"Not Specified\"."
-              : "Select a country, an Amazon category, and an image folder to begin."}
+              : "Select a store, an Amazon category, and an image folder to begin."}
           </div>
         )}
         {msg && <div className="muted" style={{ marginTop: 10 }}>{msg}</div>}

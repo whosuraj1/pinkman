@@ -24,6 +24,7 @@ export default function Sidebar() {
       <NavLink to="/my-batches" className={link}>My Batches</NavLink>
       <NavLink to="/tools" className={link}>Tools · Drive Upload</NavLink>
       {isAdmin && <NavLink to="/api-keys" className={link}>API Keys</NavLink>}
+      {isAdmin && <NavLink to="/stores" className={link}>Store Management</NavLink>}
       <NavLink to="/finish" className={link}>Finish</NavLink>
       <NavLink to="/reports" className={link}>Reports</NavLink>
 

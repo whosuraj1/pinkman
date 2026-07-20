@@ -12,6 +12,7 @@ import Finish from "./pages/Finish";
 import Reports from "./pages/Reports";
 import Tools from "./pages/Tools";
 import ApiKeys from "./pages/ApiKeys";
+import StoreManagement from "./pages/StoreManagement";
 
 function Layout() {
   return (
@@ -55,6 +56,14 @@ export default function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <ApiKeys />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/stores"
+              element={
+                <ProtectedRoute adminOnly>
+                  <StoreManagement />
                 </ProtectedRoute>
               }
             />

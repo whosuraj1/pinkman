@@ -303,3 +303,17 @@ Legend: ✅ done · 🔄 in progress · ⏳ next · ❗blocked
   (edit → deploy.sh → GitHub → Netlify). Commits: 77ab7c7, d5079a3, 45d3b09.
 - [ ] Re-add `.gitignore` / `.env.example` to the repo (skipped by web upload).
 - [ ] Push the Python-3.8 compatibility fix + docs/ to GitHub during Phase 5.
+
+## Feature: Store Management (per-user stores -> auto template) ✅ (2026-07-19)
+- Admin creates stores (name + country); assigns each to one or more users. Store
+  country selects the output template. Users generate only for assigned stores.
+- Backend: Store + UserStoreLink models; routers/stores.py (admin CRUD + assignment,
+  GET /stores/mine for users). Processing StartRequest gains store_id + country,
+  threaded to jobs -> generate_amazon_template(country). COUNTRY_TEMPLATES placeholder
+  maps UAE/India -> template (file named amazon_template_<tpl>_...).
+- Frontend: Store Management page (sidebar, admin, below API Keys). MrWhite AI now
+  uses a Store dropdown from /stores/mine instead of manual Country radios; template
+  auto-derived from the store; Start gated on store selection.
+- Tested: CRUD, /mine scoping, UAE processing -> amazon_template_uae_... Builds clean.
+- NOTE: template mapping is placeholder; employees now need BOTH keys AND a store.
+- Status: built + tested locally; pending deploy.

@@ -82,3 +82,20 @@ class UserApiKeyLink(SQLModel, table=True):
     """
     user_id: Optional[int] = Field(default=None, foreign_key="user.id", primary_key=True)
     apikey_id: Optional[int] = Field(default=None, foreign_key="apikey.id", primary_key=True)
+
+
+class Store(SQLModel, table=True):
+    """A marketplace store. Its country determines which output template is used."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = ""
+    country: str = ""                    # "UAE" | "India" (drives the template)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class UserStoreLink(SQLModel, table=True):
+    """Which stores are assigned to which users (many-to-many).
+
+    A user can only generate files for the stores linked here.
+    """
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", primary_key=True)
+    store_id: Optional[int] = Field(default=None, foreign_key="store.id", primary_key=True)

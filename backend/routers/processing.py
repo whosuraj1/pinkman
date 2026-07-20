@@ -25,6 +25,8 @@ class StartRequest(BaseModel):
     batch_id: Optional[int] = None
     batch_name: str = "batch"
     image_names: List[str]
+    store_id: Optional[int] = None
+    country: Optional[str] = None   # drives which template is used
 
 
 @router.post("/start")
@@ -46,7 +48,7 @@ def start(
             raise HTTPException(status_code=403, detail="Not your batch")
         batch_name = batch.name
 
-    job = create_job(user.id, body.batch_id, batch_name, body.image_names)
+    job = create_job(user.id, body.batch_id, batch_name, body.image_names, body.country or "")
     background.add_task(run_job, job.id)
     return {"job_id": job.id, "total": job.total}
 

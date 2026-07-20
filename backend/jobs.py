@@ -31,6 +31,7 @@ class Job:
     batch_name: str
     image_names: List[str]
     total: int
+    country: str = ""              # store country -> selects the template
     processed: int = 0
     status: str = "running"        # running | completed | error
     current_image: str = ""
@@ -43,7 +44,7 @@ _jobs: Dict[str, Job] = {}
 _lock = threading.Lock()
 
 
-def create_job(user_id: int, batch_id: Optional[int], batch_name: str, image_names: List[str]) -> Job:
+def create_job(user_id: int, batch_id: Optional[int], batch_name: str, image_names: List[str], country: str = "") -> Job:
     job = Job(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -51,6 +52,7 @@ def create_job(user_id: int, batch_id: Optional[int], batch_name: str, image_nam
         batch_name=batch_name,
         image_names=image_names,
         total=len(image_names),
+        country=country,
     )
     with _lock:
         _jobs[job.id] = job
@@ -94,7 +96,7 @@ def run_job(job_id: str) -> None:
                         s.commit()
 
         # Generate the Amazon template
-        path = generate_amazon_template(job.results, OUTPUT_DIR, job.batch_name)
+        path = generate_amazon_template(job.results, OUTPUT_DIR, job.batch_name, job.country)
         filename = path.rsplit("/", 1)[-1]
         with Session(engine) as s:
             report = Report(

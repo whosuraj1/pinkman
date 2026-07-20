@@ -39,7 +39,19 @@ COLUMNS = [
 ]
 
 
-def generate_amazon_template(rows: List[dict], output_dir: str, batch_name: str) -> str:
+# Which template each store country maps to. Placeholder — swap for your real
+# per-country Amazon templates later.
+COUNTRY_TEMPLATES = {
+    "UAE": "amazon_template_uae",
+    "India": "amazon_template_india",
+}
+
+
+def template_for_country(country: str) -> str:
+    return COUNTRY_TEMPLATES.get(country, "amazon_template_default")
+
+
+def generate_amazon_template(rows: List[dict], output_dir: str, batch_name: str, country: str = "") -> str:
     """Create an Amazon template xlsx from processed image rows.
 
     `rows` is a list of the dicts returned by ai_stub.analyze_image, each also
@@ -79,9 +91,13 @@ def generate_amazon_template(rows: List[dict], output_dir: str, batch_name: str)
     for col_idx, width in {1: 18, 2: 40, 3: 50, 7: 30}.items():
         ws.column_dimensions[ws.cell(row=1, column=col_idx).column_letter].width = width
 
+    template = template_for_country(country)
+    ws.title = (country or "Template")[:31]
+
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     safe_name = "".join(c for c in batch_name if c.isalnum() or c in ("-", "_")) or "batch"
-    filename = f"amazon_template_{safe_name}_{stamp}.xlsx"
+    prefix = template  # e.g. amazon_template_uae / _india / _default
+    filename = f"{prefix}_{safe_name}_{stamp}.xlsx"
     path = os.path.join(output_dir, filename)
     wb.save(path)
     return path
