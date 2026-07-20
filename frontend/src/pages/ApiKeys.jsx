@@ -7,6 +7,12 @@ export default function ApiKeys() {
   const [modelSaved, setModelSaved] = useState("");
   const [msg, setMsg] = useState("");
 
+  // users + assignment
+  const [users, setUsers] = useState([]);
+  const [assignUser, setAssignUser] = useState("");
+  const [assignedIds, setAssignedIds] = useState([]);
+  const [assignMsg, setAssignMsg] = useState("");
+
   // add form
   const [nk, setNk] = useState({ label: "", key_value: "" });
   // inline edit
@@ -19,7 +25,33 @@ export default function ApiKeys() {
     setModel(data.model);
     setModelSaved(data.model);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.get("/users").then((r) => setUsers(r.data)).catch(() => {});
+  }, []);
+
+  // load a user's current assignments when selected
+  useEffect(() => {
+    if (!assignUser) { setAssignedIds([]); return; }
+    api.get(`/api-keys/assignments/${assignUser}`).then((r) => setAssignedIds(r.data.key_ids));
+  }, [assignUser]);
+
+  function toggleAssigned(keyId) {
+    setAssignedIds((prev) =>
+      prev.includes(keyId) ? prev.filter((x) => x !== keyId) : [...prev, keyId]
+    );
+  }
+
+  async function saveAssignments() {
+    setAssignMsg("");
+    try {
+      await api.put(`/api-keys/assignments/${assignUser}`, { key_ids: assignedIds });
+      setAssignMsg("Assignments saved.");
+      load();
+    } catch (e) {
+      setAssignMsg(e.response?.data?.detail || "Failed to save assignments");
+    }
+  }
 
   async function saveModel() {
     setMsg("");
@@ -102,17 +134,52 @@ export default function ApiKeys() {
         {msg && <div className="muted" style={{ marginTop: 10 }}>{msg}</div>}
       </div>
 
+      {/* Assign keys to a user */}
+      <div className="card">
+        <h3>Assign keys to a user</h3>
+        <p className="muted" style={{ marginTop: 0, fontSize: 12 }}>
+          A user can only use the keys checked here. Their round-robin rotates within
+          this set. Leave none checked and that user has no keys to use.
+        </p>
+        <label>User</label>
+        <select value={assignUser} onChange={(e) => setAssignUser(e.target.value)} style={{ maxWidth: 320 }}>
+          <option value="">Select a user</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>{u.username}{u.role === "admin" ? " (admin)" : ""}</option>
+          ))}
+        </select>
+
+        {assignUser && (
+          <div style={{ marginTop: 14 }}>
+            {keys.length === 0 && <div className="muted">No keys to assign yet.</div>}
+            {keys.map((k) => (
+              <label key={k.id} style={{ display: "flex", alignItems: "center", gap: 8, margin: "6px 0", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={assignedIds.includes(k.id)}
+                  onChange={() => toggleAssigned(k.id)}
+                  style={{ width: "auto" }}
+                />
+                {k.label} <span className="muted">{k.key_masked}</span>
+              </label>
+            ))}
+            <button className="primary" style={{ marginTop: 10 }} onClick={saveAssignments}>Save assignments</button>
+            {assignMsg && <span className="muted" style={{ marginLeft: 12 }}>{assignMsg}</span>}
+          </div>
+        )}
+      </div>
+
       {/* Keys table */}
       <div className="card">
         <h3>Keys (round-robin rotation)</h3>
         <p className="muted" style={{ marginTop: 0, fontSize: 12 }}>
-          Requests cycle through enabled keys in order. Quota Used = requests routed to
-          the key; Remaining = your daily limit − used (∞ if unlimited).
+          Rotation is per user, within the keys assigned to that user. Quota Used =
+          requests routed to the key; Remaining is ∞ (no manual limit).
         </p>
         <table>
           <thead>
             <tr>
-              <th>Label</th><th>Key</th><th>Quota Used</th><th>Quota Remaining</th><th>Status</th><th></th>
+              <th>Label</th><th>Key</th><th>Assigned to</th><th>Quota Used</th><th>Remaining</th><th>Status</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -121,6 +188,7 @@ export default function ApiKeys() {
                 <tr key={k.id}>
                   <td><input value={edit.label} onChange={(e) => setEdit({ ...edit, label: e.target.value })} /></td>
                   <td><input value={edit.key_value} onChange={(e) => setEdit({ ...edit, key_value: e.target.value })} placeholder="leave blank to keep" /></td>
+                  <td className="muted">{(k.assigned_users || []).join(", ") || "—"}</td>
                   <td>{k.quota_used}</td>
                   <td>∞</td>
                   <td>—</td>
@@ -133,6 +201,7 @@ export default function ApiKeys() {
                 <tr key={k.id}>
                   <td>{k.label}</td>
                   <td className="muted">{k.key_masked}</td>
+                  <td className="muted">{(k.assigned_users || []).join(", ") || "—"}</td>
                   <td>{k.quota_used}</td>
                   <td>{k.quota_remaining === null ? "∞" : k.quota_remaining}</td>
                   <td><span className={`badge ${k.status === "active" ? "completed" : k.status === "exhausted" ? "assigned" : "in_progress"}`}>{k.status}</span></td>
@@ -145,7 +214,7 @@ export default function ApiKeys() {
                 </tr>
               )
             ))}
-            {keys.length === 0 && <tr><td colSpan={6} className="muted">No API keys yet. Add one above.</td></tr>}
+            {keys.length === 0 && <tr><td colSpan={7} className="muted">No API keys yet. Add one above.</td></tr>}
           </tbody>
         </table>
       </div>

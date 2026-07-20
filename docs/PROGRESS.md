@@ -218,6 +218,31 @@ Legend: ✅ done · 🔄 in progress · ⏳ next · ❗blocked
   Google). True live quota would need Google Cloud monitoring later.
 - **Tested:** round-robin 1→2→3→1→2→3 confirmed; disabling a key skips it in rotation;
   model set/get; masking; quota counters. Frontend builds clean.
+- **Update (2026-07-19):** Removed the manual **Daily quota** input from the API Keys
+  page (add form + inline edit) per owner — no manual quota. Backend `daily_quota`
+  field kept (defaults 0/unlimited) but no longer set from UI; "Quota Remaining" now
+  always shows ∞. Frontend-only change (ApiKeys.jsx). Clarified to owner: Used +
+  Status are real (on page refresh, once Gemini pipeline calls the rotation);
+  Remaining isn't truly knowable without a manual limit or Google Cloud monitoring.
+- **Status:** ✅ built + tested locally; pending deploy.
+
+## Feature: per-user API key assignment (scoped round-robin) ✅ (2026-07-19)
+- **What:** Assign specific keys to individual users; each user's rotation is limited
+  to their assigned keys only.
+- **Backend:**
+  - New `UserApiKeyLink` (user_id, apikey_id) many-to-many table (auto-created).
+  - `get_next_key(session, user_id)` now scopes to the user's assigned+enabled keys
+    with a PER-USER rotation pointer (`rotation_index_<user_id>`). No assigned keys →
+    returns None (user strictly can't use any others).
+  - Endpoints: GET `/api-keys/assignments/{user_id}`, PUT `/api-keys/assignments/{user_id}`
+    (replace set). List endpoint now includes `assigned_users` per key. Deleting a key
+    or a user cleans up its links.
+- **Frontend:** API Keys page → "Assign keys to a user" section (pick user →
+  checkboxes of keys → save) and an "Assigned to" column in the keys table.
+- **Tested:** emp1 (keys 1,2) rotates 1→2→1→2; emp2 (key 3) always 3; admin (none) →
+  None; independent per-user pointers; assigned_users shown. Builds clean.
+- **NOTE for Gemini wiring:** the pipeline must call `get_next_key(session, current_user.id)`
+  (user-scoped) — and every processing user must have keys assigned or they get None.
 - **Status:** ✅ built + tested locally; pending deploy.
 
 ## Phase 6+ — Features (one at a time) ⏳

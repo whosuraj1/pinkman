@@ -77,6 +77,11 @@ def delete_user(
         b.assigned_user_id = None
         session.add(b)
 
+    # Remove this user's API-key assignments.
+    from models import UserApiKeyLink
+    for l in session.exec(select(UserApiKeyLink).where(UserApiKeyLink.user_id == user_id)).all():
+        session.delete(l)
+
     session.delete(target)
     session.commit()
     return {"deleted": user_id}

@@ -9,11 +9,11 @@ from typing import List, Optional
 
 from sqlmodel import Session, select
 
-from models import ApiKey, Setting
+from models import ApiKey, Setting, UserApiKeyLink
 
 DEFAULT_MODEL = "gemini-2.5-flash"
 MODEL_KEY = "gemini_model"
-ROTATION_KEY = "rotation_index"
+ROTATION_KEY = "rotation_index"  # base; per-user pointer is ROTATION_KEY_<user_id>
 
 
 # --- settings helpers -------------------------------------------------------
@@ -40,31 +40,44 @@ def set_model_name(session: Session, name: str) -> None:
     _set_setting(session, MODEL_KEY, (name or DEFAULT_MODEL).strip())
 
 
-# --- rotation ---------------------------------------------------------------
-def _enabled_available(session: Session) -> List[ApiKey]:
+# --- rotation (scoped per user) --------------------------------------------
+def assigned_key_ids(session: Session, user_id: int) -> List[int]:
+    links = session.exec(
+        select(UserApiKeyLink).where(UserApiKeyLink.user_id == user_id)
+    ).all()
+    return [l.apikey_id for l in links]
+
+
+def _available_for_user(session: Session, user_id: int) -> List[ApiKey]:
+    ids = set(assigned_key_ids(session, user_id))
+    if not ids:
+        return []
     keys = session.exec(select(ApiKey).order_by(ApiKey.id)).all()
     return [
         k for k in keys
-        if k.enabled and (k.daily_quota == 0 or k.quota_used < k.daily_quota)
+        if k.id in ids and k.enabled and (k.daily_quota == 0 or k.quota_used < k.daily_quota)
     ]
 
 
-def get_next_key(session: Session) -> Optional[ApiKey]:
-    """Return the next enabled key (round-robin) and increment its usage.
+def get_next_key(session: Session, user_id: int) -> Optional[ApiKey]:
+    """Return the next key (round-robin) from the keys ASSIGNED TO THIS USER.
 
-    Skips disabled and quota-exhausted keys. Returns None if none are available.
+    Only the user's assigned, enabled, non-exhausted keys are considered, with a
+    rotation pointer kept separately per user. Returns None if the user has no
+    usable assigned keys.
     """
-    available = _enabled_available(session)
+    available = _available_for_user(session, user_id)
     if not available:
         return None
+    rot_key = f"{ROTATION_KEY}_{user_id}"
     try:
-        idx = int(_get_setting(session, ROTATION_KEY, "0"))
+        idx = int(_get_setting(session, rot_key, "0"))
     except ValueError:
         idx = 0
     chosen = available[idx % len(available)]
     chosen.quota_used += 1
     session.add(chosen)
-    _set_setting(session, ROTATION_KEY, str((idx + 1) % 1_000_000))
+    _set_setting(session, rot_key, str((idx + 1) % 1_000_000))
     session.commit()
     session.refresh(chosen)
     return chosen

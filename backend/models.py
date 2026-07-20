@@ -72,3 +72,13 @@ class Setting(SQLModel, table=True):
     """Simple key/value app settings (e.g. the Gemini model name, rotation pointer)."""
     key: str = Field(primary_key=True)
     value: str = ""
+
+
+class UserApiKeyLink(SQLModel, table=True):
+    """Which API keys are assigned to which users (many-to-many).
+
+    A user's Gemini rotation is limited to the keys linked here. A key may be
+    assigned to more than one user.
+    """
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id", primary_key=True)
+    apikey_id: Optional[int] = Field(default=None, foreign_key="apikey.id", primary_key=True)
