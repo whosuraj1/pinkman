@@ -243,9 +243,13 @@ Legend: ✅ done · 🔄 in progress · ⏳ next · ❗blocked
   None; independent per-user pointers; assigned_users shown. Builds clean.
 - **NOTE for Gemini wiring:** the pipeline must call `get_next_key(session, current_user.id)`
   (user-scoped) — and every processing user must have keys assigned or they get None.
+- **Update (2026-07-19):** Moved per-user assignment INTO the Add/Edit key form (per
+  owner) — removed the separate "Assign keys to a user" section. Now each key has an
+  **Assigned Users** checkbox group in Add and Edit; a key can go to multiple users.
+  Backend: `ApiKeyCreate.user_ids` + `ApiKeyUpdate.user_ids` (None = leave unchanged,
+  [] = clear); list returns `assigned_user_ids` too. Rotation still per-user/scoped.
+  Tested: add with [2,3]; edit->[2]; label-only edit preserves assignments. Builds clean.
 - **Status:** ✅ built + tested locally; pending deploy.
-
-## Phase 6+ — Features (one at a time) ⏳
 - Harden login / change default demo passwords, Gemini pipeline, Google Drive tool,
   image resize + bounded concurrency, etc. Owner will supply feature requests and
   scripts.

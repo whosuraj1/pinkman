@@ -21,6 +21,7 @@ class ApiKeyCreate(BaseModel):
     key_value: str
     daily_quota: int = 0
     enabled: bool = True
+    user_ids: List[int] = []
 
 
 class ApiKeyUpdate(BaseModel):
@@ -28,6 +29,7 @@ class ApiKeyUpdate(BaseModel):
     key_value: Optional[str] = None   # blank/None = keep existing
     daily_quota: Optional[int] = None
     enabled: Optional[bool] = None
+    user_ids: Optional[List[int]] = None   # None = leave assignments unchanged
 
 
 class ModelUpdate(BaseModel):
@@ -38,6 +40,16 @@ class AssignmentUpdate(BaseModel):
     key_ids: List[int]
 
 
+def _set_key_users(session: Session, key_id: int, user_ids: List[int]) -> None:
+    """Replace the set of users assigned to a key."""
+    for l in session.exec(select(UserApiKeyLink).where(UserApiKeyLink.apikey_id == key_id)).all():
+        session.delete(l)
+    valid_users = {u.id for u in session.exec(select(User)).all()}
+    for uid in set(user_ids):
+        if uid in valid_users:
+            session.add(UserApiKeyLink(user_id=uid, apikey_id=key_id))
+
+
 @router.get("")
 def list_keys(_: User = Depends(require_admin), session: Session = Depends(get_session)):
     keys = session.exec(select(ApiKey).order_by(ApiKey.id)).all()
@@ -45,12 +57,15 @@ def list_keys(_: User = Depends(require_admin), session: Session = Depends(get_s
     users = {u.id: u.username for u in session.exec(select(User)).all()}
     # map key_id -> [usernames]
     by_key: Dict[int, List[str]] = {}
+    by_key_ids: Dict[int, List[int]] = {}
     for l in links:
         by_key.setdefault(l.apikey_id, []).append(users.get(l.user_id, f"user{l.user_id}"))
+        by_key_ids.setdefault(l.apikey_id, []).append(l.user_id)
     result = []
     for k in keys:
         s = summarize(k)
         s["assigned_users"] = sorted(by_key.get(k.id, []))
+        s["assigned_user_ids"] = sorted(by_key_ids.get(k.id, []))
         result.append(s)
     return {"model": get_model_name(session), "keys": result}
 
@@ -101,6 +116,8 @@ def add_key(body: ApiKeyCreate, _: User = Depends(require_admin), session: Sessi
     session.add(k)
     session.commit()
     session.refresh(k)
+    _set_key_users(session, k.id, body.user_ids)
+    session.commit()
     return summarize(k)
 
 
@@ -118,6 +135,8 @@ def update_key(key_id: int, body: ApiKeyUpdate, _: User = Depends(require_admin)
     if body.enabled is not None:
         k.enabled = body.enabled
     session.add(k)
+    if body.user_ids is not None:
+        _set_key_users(session, k.id, body.user_ids)
     session.commit()
     session.refresh(k)
     return summarize(k)
